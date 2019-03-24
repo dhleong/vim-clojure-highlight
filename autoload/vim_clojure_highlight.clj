@@ -45,6 +45,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def syntax-reserved-words
+  #{"contains" "oneline" "fold" "display" "extend" "concealends" "conceal"
+    "cchar" "contained" "containedin" "nextgroup" "transparent" "skipwhite"
+    "skipnl" "skipempty"})
+
 (def core-symbol->syntax-group
   "A map of symbols from clojure.core mapped to syntax group name."
   (reduce
@@ -74,12 +79,17 @@
           (fn-var? v) "clojureFunc"
           :else "clojureVariable")))
 
+(defn clean-reserved [word]
+  (if (contains? syntax-reserved-words word)
+    (str "[" word "]")
+    word))
+
 (defn syntax-keyword-dictionary [ns-refs]
   (->> ns-refs
        (group-by (comp var-type peek))
        (mapv (fn [[type sym->var]]
                (->> sym->var
-                    (mapv (comp pr-str str first))
+                    (mapv (comp pr-str clean-reserved str first))
                     (string/join \,)
                     (format "'%s': [%s]" type))))
        (string/join \,)))

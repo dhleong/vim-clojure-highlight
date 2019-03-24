@@ -12,6 +12,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def syntax-reserved-words
+  #{"contains" "oneline" "fold" "display" "extend" "concealends" "conceal"
+    "cchar" "contained" "containedin" "nextgroup" "transparent" "skipwhite"
+    "skipnl" "skipempty"})
+
 (defn clojure-core?
   "Is this var from clojure.core?"
   [var]
@@ -24,12 +29,17 @@
           (fn-var? v) "clojureFunc"
           :else "clojureVariable")))
 
+(defn clean-reserved [word]
+  (if (contains? syntax-reserved-words word)
+    (str "[" word "]")
+    word))
+
 (defn syntax-keyword-dictionary [ns-refs]
   (->> ns-refs
        (group-by (comp var-type peek))
        (mapv (fn [[type sym->var]]
                (->> sym->var
-                    (mapv (comp pr-str str first))
+                    (mapv (comp pr-str clean-reserved str first))
                     (clojure.string/join \,)
                     ((fn [values]
                        (str "'" type "': [" values "]"))))))
